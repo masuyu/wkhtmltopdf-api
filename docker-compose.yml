@@ -1,9 +1,12 @@
-version: '3'
+version: '3.5'
+
 services:
-  api:
-    build: .
-    command: go run main.go
+  app:
+    build:
+      context: .
+      target: build
     volumes:
-      - .:/app
+      - ./:/go/src/github.com/masuyu/wkhtmltopdf-api
+    command: go run wkhtmltopdf.go
     ports:
       - 1323:1323
