@@ -10,3 +10,15 @@ services:
     command: go run wkhtmltopdf.go
     ports:
       - 1323:1323
+    depends_on:
+      - wkhtmltopdf
+
+  wkhtmltopdf:
+    build: .
+    volumes:
+      - .:/opt/data-volume
+    working_dir: /opt/data-volume
+    entrypoint:
+      - wkhtmltopdf
+    command:
+      - -h
