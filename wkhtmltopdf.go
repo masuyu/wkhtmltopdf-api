@@ -11,6 +11,6 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.GET("/hello", api.MainPage())
+	e.GET("/wkhtmltopdf", api.GetPdf())
 	e.Start(":1323")
 }
