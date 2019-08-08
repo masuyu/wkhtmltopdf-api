@@ -11,8 +11,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-const path = "/usr/local/bin/wkhtmltopdf"
-
 // GetPdf recived url, generate pdf, return pdf
 func GetPdf() echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -23,7 +21,7 @@ func GetPdf() echo.HandlerFunc {
 		page.DisableExternalLinks.Set(false)
 
 		// set the path
-		gowkhtmltopdf.SetPath(path)
+		gowkhtmltopdf.SetPath("/usr/local/bin/wkhtmltopdf")
 
 		// create new pdf generator
 		pdfg, err := gowkhtmltopdf.NewPDFGenerator()
