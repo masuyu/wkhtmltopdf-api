@@ -1,14 +1,11 @@
 package api
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	gowkhtmltopdf "github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/labstack/echo"
-	"github.com/mitchellh/go-homedir"
 )
 
 // GetPdf recived url, generate pdf, return pdf
@@ -19,9 +16,6 @@ func GetPdf() echo.HandlerFunc {
 		page := gowkhtmltopdf.NewPage(uri)
 		page.NoBackground.Set(true)
 		page.DisableExternalLinks.Set(false)
-
-		// set the path
-		gowkhtmltopdf.SetPath("/usr/local/bin/wkhtmltopdf")
 
 		// create new pdf generator
 		pdfg, err := gowkhtmltopdf.NewPDFGenerator()
@@ -47,14 +41,8 @@ func GetPdf() echo.HandlerFunc {
 			log.Fatal(err)
 		}
 
-		// output
-		utime := time.Now().Unix()
-		userHomeDir, _ := homedir.Dir()
-		err = pdfg.WriteFile(fmt.Sprintf("%v/Downloads/%v.pdf", userHomeDir, utime))
-		if err != nil {
-			log.Fatal(err)
-		}
+		pdfbyte, err := pdfg.ToJSON()
 
-		return c.String(http.StatusOK, fmt.Sprintf("%v: output pdf done!", uri))
+		return c.JSON(http.StatusOK, pdfbyte)
 	}
 }
