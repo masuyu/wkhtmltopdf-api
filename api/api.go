@@ -41,7 +41,7 @@ func GetPdf() echo.HandlerFunc {
 			log.Fatal(err)
 		}
 
-		pdfbyte, err := pdfg.ToJSON()
+		pdfbyte := pdfg.Bytes()
 
 		return c.JSON(http.StatusOK, pdfbyte)
 	}
