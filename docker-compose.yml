@@ -8,3 +8,9 @@ services:
     command: ./gowkhtmltopdf
     ports:
       - 1323:1323
+    networks:
+      - offerbox-docker_app_net
+
+networks:
+  offerbox-docker_app_net:
+    external: true

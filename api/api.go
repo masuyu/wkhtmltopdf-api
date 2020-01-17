@@ -1,48 +1,76 @@
 package api
 
 import (
+	"bytes"
 	"log"
 	"net/http"
+	"strings"
 
 	gowkhtmltopdf "github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/labstack/echo"
 )
 
-// GetPdf recived url, generate pdf, return pdf
-func GetPdf() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// set page, base to pdf
-		uri := c.QueryParam("uri")
-		page := gowkhtmltopdf.NewPage(uri)
-		page.NoBackground.Set(true)
-		page.DisableExternalLinks.Set(false)
+type PdfOptions struct {
+	HTMLString   string `json:"htmlstring"`
+	Encoding     string `json:"encoding"`
+	PageSize     string `json:"page-size"`
+	MarginBottom uint   `json:"margin-bottom"`
+	MarginLeft   uint   `json:"marin-left"`
+	MarginRight  uint   `json:"margin-right"`
+	MarginTop    uint   `json:"margin-top"`
+	UserName     string `json:"username"`
+	Password     string `json:"password"`
+}
 
-		// create new pdf generator
-		pdfg, err := gowkhtmltopdf.NewPDFGenerator()
-		if err != nil {
+// FetchPdf recived url, generate pdf, return pdf
+func FetchPdf() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// post json bind struct PdfOptions
+		pdfoptions := new(PdfOptions)
+		if err := c.Bind(pdfoptions); err != nil {
 			log.Fatal(err)
 		}
+		// page type Page
+		page := gowkhtmltopdf.NewPageReader(strings.NewReader(pdfoptions.HTMLString))
 
-		// add page to the PDF generator
+		// set page options basic Authentication
+		page.PageOptions.Username.Set(pdfoptions.UserName)
+		page.PageOptions.Password.Set(pdfoptions.Password)
+		page.PageOptions.DisableLocalFileAccess.Set(true)
+		page.PageOptions.NoImages.Set(true)
+
+		// pdfg type PDFGenerator
+		pdfg := gowkhtmltopdf.NewPDFPreparer()
 		pdfg.AddPage(page)
 
-		// set dpi of the content
-		pdfg.Dpi.Set(350)
+		// set options
+		pdfg.Dpi.Set(600)
+		pdfg.PageSize.Set(pdfoptions.PageSize)
+		pdfg.MarginBottom.Set(pdfoptions.MarginBottom)
+		pdfg.MarginTop.Set(pdfoptions.MarginTop)
+		pdfg.MarginLeft.Set(pdfoptions.MarginLeft)
+		pdfg.MarginRight.Set(pdfoptions.MarginRight)
 
-		// set margins to zero at all direction
-		pdfg.MarginBottom.Set(0)
-		pdfg.MarginTop.Set(0)
-		pdfg.MarginLeft.Set(0)
-		pdfg.MarginRight.Set(0)
-
-		// generate pdf
-		err = pdfg.Create()
+		// The html string is also saved as base64 string in the JSON file
+		jsonBytes, err := pdfg.ToJSON()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		pdfbyte := pdfg.Bytes()
+		// Server code, create a new PDF generator from JSON, also looks for the wkhtmltopdf executable
+		pdfgFromJSON, err := gowkhtmltopdf.NewPDFGeneratorFromJSON(bytes.NewReader(jsonBytes))
+		if err != nil {
+			log.Fatal(err)
+		}
 
+		// Create the PDF
+		err = pdfgFromJSON.Create()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// return dfpbyte
+		pdfbyte := pdfgFromJSON.Bytes()
 		return c.JSON(http.StatusOK, pdfbyte)
 	}
 }
